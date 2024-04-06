@@ -1,0 +1,3 @@
+Below commits use command 'git log' to retrieve 
+
+"first commit" - 7ffcad58a352dd33d52a850636aab487cd7a70a2

@@ -1,18 +1,16 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.common.exceptions import ElementClickInterceptedException
-from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_utility import WebDriverUtility
 from bs4 import BeautifulSoup
-import openpyxl
+from openpyxl import Workbook, load_workbook 
+from openpyxl.utils import get_column_letter
+import os 
 import re
-import time
+from urllib.parse import urlparse
 
 
 class SEOReportGenerator: 
@@ -34,38 +32,39 @@ class SEOReportGenerator:
 		"""HTML content is obtained and passed to DataParser for each type of data required"""
 
 		# Indexed Pages Data
-		indexed_pages_html = self.browser_navigator.get_indexed_pages_html()
-		indexed_data = self.data_parser.parse_indexed_pages(indexed_pages_html)
+		indexed_pages = self.browser_navigator.get_indexed_pages()
+		indexed_data = self.data_parser.parse_indexed_pages(indexed_pages)
 		self.excel_manager.update_indexed_pages(indexed_data)
+		self.excel_manager.copy_indexed_pages()  # copy updated Indexed Pages to Monthly_SEO_Metrics.xlsx
 
 		# 404s Data 
-		not_found_html = self.browser_navigator.get_not_found_pages()
-		not_found_data = self.data_parser.parse_not_found_pages(not_found_html)
-		self.excel_manager.write_404s(not_found_data)
+		not_found_urls = self.browser_navigator.get_404_urls()
+		not_found_data = self.data_parser.parse_get_404_urls(not_found_urls)
+		self.excel_manager.write_404_urls(not_found_data)
 
 		# Queries Last 3 Months Data 
-		queries_html = self.browser_navigator.get_queries_data()
-		queries_data = self.data_parser.parse_queries_data(queries_html)
+		query_searches = self.browser_navigator.get_top_queries_and_clicks()
+		queries_data = self.data_parser.parse_queries_data(query_searches)
 		self.excel_manager.write_queries_data(queries_data)
 
 		# Top Pages Last 3 Months Data
-		top_pages_html = self.browser_navigator.get_top_pages_data()
-		top_pages_data = self.data_parser.parse_top_pages_data(top_pages_html)
+		top_pages = self.browser_navigator.get_top_pages_and_clicks()
+		top_pages_data = self.data_parser.parse_top_pages_and_clicks(top_pages)
 		self.excel_manager.write_top_pages_data(top_pages_data)
 
 		# Total Clicks Last 3 Months Data
-		total_clicks_html = self.browser_navigator.get_total_clicks_data()
-		total_clicks_data = self.data_parser.parse_total_clicks_data(total_clicks_html)
+		total_organic_clicks = self.browser_navigator.get_total_clicks()
+		total_clicks_data = self.data_parser.parse_total_clicks_data(total_organic_clicks)
 		self.excel_manager.update_total_clicks_data(total_clicks_data)
+		self.excel_manager.copy_total_clicks()  # copy updated Total Clicks to Monthly_SEO_Metrics.xlsx
 
 		# Save the Excel workbook 
-		self.excel_manager.save_workbook("Monthly SEO Metrics.xlsx")
-
+		self.excel_manager.save_workbook("Monthly_SEO_Metrics.xlsx")
+		
 
 	def close(self): 
 		"""Method to close the WebDriver when done"""
 		self.browser_navigator.driver.quit()
-
 
 
 class BrowserNavigator:
@@ -78,7 +77,10 @@ class BrowserNavigator:
 	def navigate_to_console(self): 
 		url = 'https://search.google.com/u/2/search-console/index?resource_id=sc-domain%3Aturnkeyofficespace.com'
 		self.driver.get(url)
-		time.sleep(5)  # Adjust sleep time as necessary for page to load 
+		# Wait for a specific element that signifies the page has loaded
+		WebDriverWait(self.driver, 10).until(
+			EC.presence_of_element_located((CSS_SELECTOR, ".nnLLaf.vtZz6e"))
+		)
 
 
 	def get_indexed_pages(self): 
@@ -87,6 +89,7 @@ class BrowserNavigator:
 
 		indexed_data = {"Indexed Count": None, "Last Updated": None}
 
+		# Would this return only text that would neatly go into the indexed_data dictionary?
 		try: 
 			# Find the element containing the number of indexed pages
 			indexed_count_element = self.driver.find_element(By.CSS_SELECTOR, ".nnLLaf.vtZz6e")
@@ -230,7 +233,7 @@ class BrowserNavigator:
 			# Check for and handle pagination
 			try: 
 				next_page_button.click()
-				WebDriverWait(self.driver, 7).until(
+				WebDriverWait(self.driver, 10).until(
 					EC.staleness_of(top_pages_elements[0])
 				)
 			except (NoSuchElementException, TimeoutException): 
@@ -240,14 +243,17 @@ class BrowserNavigator:
 
 
 	def get_total_clicks(self): 
+		"""Returns the dictionary total_clicks_data"""
 		self.driver.get(
 			'https://search.google.com/u/2/search-console/performance/search-analytics'
 			'?resource_id=sc-domain%3Aturnkeyofficespace.com')
 
 		# Assure chart and page have loaded
-		WebDriverWait(self.driver, 7).until(
+		WebDriverWait(self.driver, 10).until(
 			EC.presence_of_element_located((By.CSS_SELECTOR, ".nnLLaf.vtZz6e"))
 		)
+
+		total_clicks_data = {}
 
 		# Find the element containing the total clicks using its unique class names
 		try:
@@ -256,22 +262,220 @@ class BrowserNavigator:
 			# The title attribute contains the numerical value as a string
 			# Convert the title string to an integer
 			total_clicks = int(total_clicks_title.replace(',', ''))  # Remove commas from thousands
-		except NoSuchElementException:
-			print("Total clicks element not found.")
-			total_clicks = None 
-
-			# Fetching the most recent date
-			# Find all elements that contain dates and select the last one
 
 			dates_elements = self.driver.find_elements(By.CSS_SELECTOR, "text.V67aGc > tspan")
-			if dates_elements: 
-				most_recent_date = dates_elements[-1].text  # Last item in list is most recent
-			else: 
+			if dates_elements:
+				most_recent_date = dates_elements[-1].text # Last item in list is most recent
+				total_clicks_data[most_recent_date] = total_clicks 
+			else:
 				print("No date elements found.")
-				most_recent_date = None 
+		except NoSuchElementException:
+			print("Total clicks element or date not found.")
+	
+		return total_clicks_data 
 
+"""
+@staticmethod decorator allows you to call the directly using the class name, without creating an instance.
+For example class.method(parameter1, parameter2)
+Static methods are often used for utility or helper tasks that don't need to access or 
+modify the state of a class instance.
+"""
+
+class DataParser:
+
+	@staticmethod
+	def is_valid_url(url): 
+		try:
+			result = urlparse(url)
+			# Check if the url has a scheme (eg http or https) and a netloc (domain name)
+			return all([result.scheme, result.netloc])
+		except Exception: 
+			return False
+
+		"""
+		Example usage: 
+		print(is_valid_url("https://www.example.com"))  # Output: True
+		print(is_valid_url("www.example.com"))  # Output: False
+		print(is_valid_url("example"))  # Output: False
+		"""
+
+	@staticmethod
+	def validate_urls(urls):
+		# Use is_valid_url to filter and return only valid URLs
+		return [url for url in urls if is_valid_url(url)]
+
+
+	@staticmethod
+	def parse_indexed_pages(indexed_data):
+		"""Basic validation/transformation for indexed pages data.
+		'data' might be a dict with 'Indexed Count' and 'Last Updated'
+		"""
+		if "Indexed Count" in indexed_data and isinstance(indexed_data["Indexed Count"], str):
+			indexed_data["Indexed Count"] = int(indexed_data["Indexed Count"].replace(',', ''))
+		if "Last Updated" in indexed_data and isinstance(indexed_data["Indexed Count"], str):
+			# Placeholder for date parsing if necessary
+			pass
+
+		parsed_indexed_data = indexed_data
+
+		return parsed_indexed_data 
+
+	@staticmethod
+	def parse_404_urls(all_404_urls):
+		"""Filter and return only valid URLs"""
+		valid_404_urls = [url for url in all_404_urls if DataParser.is_valid_url(url)]
+
+		return valid_404_urls
+
+	@staticmethod
+	def parse_queries_data(queries_and_clicks): 
+		"""Example: Ensure click counts are integers and filter out any invalid entries.
+		Returns the new dictionary parsed_data."""
+		parsed_queries_and_clicks = {}
+		for query, clicks in queries_and_clicks.items():
+			if isinstance(clicks, int):
+				parsed_queries_and_clicks[query] = int(clicks)
+
+		return parsed_queries_and_clicks 
+
+	@staticmethod
+	def parse_top_pages_data(page_clicks): 
+		"""Assuming 'page_clicks' is a dictionary with pages as keys and clicks as values
+		Validate URLs and ensure clicks are integers."""
+		for page, clicks in page_clicks.items():
+			if isinstance(clicks, int) and DataParser.is_valid_url(page):
+				page_clicks_parsed[page] = int(clicks)
 		
-		return most_recent_date, total_clicks 
+		return page_clicks_parsed 
+
+	
+	@staticmethod
+	def parse_total_clicks_data(total_clicks_data):
+		# Additional checks performed here if needed
+		return total_clicks_data 
+
+
+class ExcelManager: 
+
+	def __init__(self): 
+		self.base_path = os.getcwd()  # Directory to save Excel files
+
+
+	def update_indexed_pages(self, parsed_indexed_data): 
+		"""Updates or creates an Excel workbook for indexed page data."""
+		filepath = os.path.join(self.base_path, 'Indexed_Pages.xlsx')
+		self._update_workbook(filepath, parsed_indexed_data, ["Date", "Number of Indexed Pages"])
+
+
+	def update_total_clicks_data(self, total_clicks_data):
+		"""Updates or creates an Excel workbook for total clicks data."""
+		filepath = os.path.join(self.base_path, 'Total_clicks.xlsx')
+		self._update_workbook(filepath, total_clicks_data, ["Date", "Total Clicks"])
+
+
+	def write_404_urls(self, valid_404_urls):
+		"""Writes the 404 urls into the designated Excel workbook."""
+		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "404s", valid_404_urls, ["URL"])
+
+
+	def write_queries_data(self, parsed_queries_and_clicks):
+		"""Writes query data into the Excel workbook."""
+		self.write_to_workbook("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
+			parsed_queries_and_clicks, ["Top Queries", "Clicks"])
+
+
+	def write_top_pages_data(self, page_clicks_parsed): 
+		"""Writes top pages data into the Excel workbook."""
+		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "Top Pages Last 3 Months", 
+			page_clicks_parsed, ["Top Pages", "Clicks"])
+
+
+	def copy_indexed_pages(self):
+		"""Copies indexed pages data from the Indexed_Pages.xlsx to the 
+		Monthly_SEO_Metrics.xlsx workbook."""
+		self._copy_data("Indexed_Pages.xlsx", "Monthly_SEO_Metrics.xlsx", "Indexed Pages")
+
+
+	def copy_total_clicks(self): 
+		"""Copies total clicks data from the Total_Clicks.xlsx to the 
+		Monthly_SEO_Metrics.xlsx workbook."""
+		self._copy_data("Total_Clicks.xlsx", "Monthly_SEO_Metrics.xlsx", "Total Clicks Last 3 Months")
+
+
+	def save_workbook(self, workbook_name): 
+		"""Saves the workbook after all updates or changes have been made."""
+		workbook_path = os.path.join(self.base_path, workbook_name)
+		if workbook_name in os.listdir(self.base_path): 
+			wb = load_workbook(workbook_path)
+		else: 
+			wb = Workbook()  # create a new workbook if not existing
+		wb.save(workbook_path)
+
+
+	def _update_workbook(self, filepath, data, headers):
+		"""Helper method to update or create a new Excel workbook with data."""
+		if os.path.exists(filepath): 
+			wb - load_workbook(filepath)
+			ws = wb.active 
+		else: 
+			wb = Workbook()
+			ws = wb.active() 
+			ws.append(headers)  # add headers if new workbook
+		for date, value in data.items():
+			ws.append([date, value])
+		wb.save(filepath)
+
+
+	def _write_to_workbook(self, workbook_name, sheet_name, data, headers): 
+		"""Helper method to write data to a specific workbook and sheet.
+		Handles both dictionaries and lists as isput data."""
+		filepath = os.path.join(self.base_path, workbook_name)
+		if not os.path.exists(filepath):
+			wb = Workbook()
+			ws = wb.create_sheet(title=sheet_name)
+		else: 
+			wb = load_workbook(filepath)
+			if sheet_name in wb.sheetnames: 
+				ws = wb[sheet_name]
+				ws.delete_rows(2, ws.max_row + 1)  # clear existing data from row 2 on
+			else: 
+				ws = wb.create_sheet(title=sheet_name)
+
+		ws.append(headers)  # add headers for new sheet 
+
+		if isinstance(data, dict): 
+			for key, value in data.items(): 
+				ws.append([key, value])
+		elif isinstance(data, list):
+			for item in data: 
+				ws.append([item])  # each item in its own row, under the first header
+
+		wb.save(filepath) 
+
+
+	def _copy_data(self, source_file, dest_file, sheet_name):
+		"""Copies data from source file to destination file, to appropriate sheet."""
+		src_path = os.path.join(self.base_path, src_file)
+		dest_path = os.path.join(self.base_path, dest_file) 
+		src_wb = load_workbook(src_path)
+		src_ws = src_wb.active
+		dest_wb = load_workbook(dest_path)
+		if sheet_name in dest_wb.sheetnames:
+			dest_ws = dest_wb[sheet_name]
+			dest_wb.remove(dest_ws)
+		dest_ws = dest_wb.create_sheet(title=aheet_name)
+		for row in src_ws.iter_rows():
+			dest_ws.append([cell.value for cell in row])
+		dest_wb.save(dest_path) 
+
+
+
+
+
+
+
+
+
 
 
 
