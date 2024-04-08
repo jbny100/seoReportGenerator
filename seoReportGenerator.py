@@ -1,15 +1,19 @@
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_utility import WebDriverUtility
 from bs4 import BeautifulSoup
 from openpyxl import Workbook, load_workbook 
 from openpyxl.utils import get_column_letter
 import os 
 import re
+import time 
+from datetime import datetime 
 from urllib.parse import urlparse
 
 
@@ -17,13 +21,82 @@ class SEOReportGenerator:
 
 	def __init__(self):
 		# Initialize the WebDriver using WebDriverUtility
-		driver = WebDriverUtility.setup_driver()
+		self.driver = WebDriverUtility.setup_driver()
+		if not self.driver:
+			print("Failed to initialize the WebDriver. Please check the setup.")
+			exit(1)  # stop program execution if the driver fails to initialize
 
 		# Pass the WebDriver instance to BrowserNavigator
-		self.browser_navigator = BrowserNavigator(driver)
+		self.browser_navigator = BrowserNavigator(self.driver)
 
 		self.data_parser = DataParser()
 		self.excel_manager = ExcelManager()
+
+
+	def login(self):
+		"""Log into Google Search Console with the provided username and password."""
+		print("Navigating to the login page...")
+		login_url = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fsearch.google.com%2Fu%2F2%2Fsearch-console%2Findex%3Fresource_id%3Dsc-domain%3Aturnkeyofficespace.com&followup=https%3A%2F%2Fsearch.google.com%2Fu%2F2%2Fsearch-console%2Findex%3Fresource_id%3Dsc-domain%3Aturnkeyofficespace.com&ifkv=ARZ0qKJdYymqdmqQWq01fihTEzH96aEB97nVtP7y5_8bAPXyPMZ2KrHmWXy1eEX9qZ6RKuPmPG7iCg&passive=1209600&service=sitemaps&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-620576232%3A1712399017622814&theme=mn&ddm=0'
+		self.driver.get(login_url)
+		print("Page loaded, attempting to fill username...")
+
+		# Input username
+		user_elem = WebDriverWait(self.driver, 10).until(
+			EC.presence_of_element_located((By.ID, "identifierId"))
+		)
+
+		user_elem.send_keys('jon@turnkeyofficespace.com')
+		
+		# Click the 'Next" button after entering the username
+		next_button = WebDriverWait(self.driver, 10).until(
+			EC.element_to_be_clickable((By.CSS_SELECTOR, "#identifierNext > div > button > span"))
+		)
+		next_button.click()
+		print("Username entered, waiting for password filed...")
+
+		# Wait for transition and input password 
+		password_elem = WebDriverWait(self.driver, 10).until(
+			EC.presence_of_element_located((By.NAME, "Passwd"))
+		)
+		time.sleep(2)
+		print("Password field available, entering password...")
+
+		password_elem.send_keys('Kjwmx6Koaet2jx')
+
+		# Click the 'Next" button after entering the password
+		next_button_password = WebDriverWait(self.driver, 10).until(
+			EC.element_to_be_clickable((By.CSS_SELECTOR, "#passwordNext > div > button > span"))
+		)
+
+		next_button_password.click()
+		print("Password submitted, waiting for 2FA prompt...")
+
+		# Manually handle 2FA
+		self.enter_two_factor_code()
+
+		time.sleep(2)
+
+	def enter_two_factor_code(self): 
+		try: 
+			# Wait for the 2FA code input field to appear 
+			code_input = WebDriverWait(self.driver, 30).until(
+				EC.presence_of_element_located((By.CSS_SELECTOR, 
+					"input[type='text'][autocomplete='one-time-code']"))
+			)
+			verification_code = input("Enter your 2FA code: ")
+			code_input.send_keys(verification_code)
+
+			# Locate and click Next button after entering 2FA code
+			next_button = WebDriverWait(self.driver, 10).until(
+				EC.element_to_be_clickable((By.CSS_SELECTOR, 
+					"#idvPreregisteredPhoneNext > div > button > span"))
+			)
+			next_button.click()
+
+		except TimeoutException:
+			print("2FA input field not found or Next button not clickable.")
+			self.driver.save_screenshot('2fa_error.png')  # save a screenshot for debugging 
+	
 
 	def run(self):
 		# Navigate to the initial URL of Google Search Console
@@ -39,7 +112,7 @@ class SEOReportGenerator:
 
 		# 404s Data 
 		not_found_urls = self.browser_navigator.get_404_urls()
-		not_found_data = self.data_parser.parse_get_404_urls(not_found_urls)
+		not_found_data = self.data_parser.parse_404_urls(not_found_urls)
 		self.excel_manager.write_404_urls(not_found_data)
 
 		# Queries Last 3 Months Data 
@@ -49,7 +122,7 @@ class SEOReportGenerator:
 
 		# Top Pages Last 3 Months Data
 		top_pages = self.browser_navigator.get_top_pages_and_clicks()
-		top_pages_data = self.data_parser.parse_top_pages_and_clicks(top_pages)
+		top_pages_data = self.data_parser.parse_top_pages_data(top_pages)
 		self.excel_manager.write_top_pages_data(top_pages_data)
 
 		# Total Clicks Last 3 Months Data
@@ -60,7 +133,7 @@ class SEOReportGenerator:
 
 		# Save the Excel workbook 
 		self.excel_manager.save_workbook("Monthly_SEO_Metrics.xlsx")
-		
+
 
 	def close(self): 
 		"""Method to close the WebDriver when done"""
@@ -72,92 +145,122 @@ class BrowserNavigator:
 
 	def __init__(self, driver):
 		self.driver = driver 
-
+		self.download_path = "/Users/jonathanbachrach/Downloads"
 
 	def navigate_to_console(self): 
-		url = 'https://search.google.com/u/2/search-console/index?resource_id=sc-domain%3Aturnkeyofficespace.com'
-		self.driver.get(url)
-		# Wait for a specific element that signifies the page has loaded
-		WebDriverWait(self.driver, 10).until(
-			EC.presence_of_element_located((CSS_SELECTOR, ".nnLLaf.vtZz6e"))
-		)
+		current_url = self.driver.current_url
+		target_url = 'https://search.google.com/u/2/search-console/index?resource_id=sc-domain:turnkeyofficespace.com'
+		if current_url != target_url: 
+			self.driver.get(target_url)
+		try: 
+			# Wait for a specific element that signifies the page has loaded
+			WebDriverWait(self.driver, 10).until(
+				EC.presence_of_element_located((By.CSS_SELECTOR, ".nnLLaf.vtZz6e"))
+			)
+			print("Navigatied to console and page in loaded.")
+		except TimeoutException:
+			print("Failed to load the Google Search Console dashboard properly.")
+			self.driver.save_screenshot('console_load_fail.png')
 
 
 	def get_indexed_pages(self): 
+		"""Returns indexed_data dict{}"""
 		# Navigate to the URL that contains the indexed pages info 
 		self.navigate_to_console() 
 
-		indexed_data = {"Indexed Count": None, "Last Updated": None}
+		indexed_data = {"Last Updated": None, "Indexed Count": None}
 
-		# Would this return only text that would neatly go into the indexed_data dictionary?
-		try: 
-			# Find the element containing the number of indexed pages
-			indexed_count_element = self.driver.find_element(By.CSS_SELECTOR, ".nnLLaf.vtZz6e")
-			indexed_data["Indexed Count"] = indexed_count_element.get_attribute('title')
+		# Retrieve all elements matching the CSS selector
+		elements = self.driver.find_elements(By.CSS_SELECTOR, ".nnLLaf.vtZz6e")
 
-		except NoSuchElementException: 
-			print("Indexed count element not found.")
+		if len(elements) >= 2:  # Ensure there are at least two elements
+			indexed_element = elements[1]  # Assuming Indexed Count comes after Not indexed
+			indexed_data["Indexed Count"] = indexed_element.get_attribute('title')
 
-		try: 
-			# Locate the element that includes "Last Updated" text
-			last_updated_element = self.driver.find_element(By.XPATH, "//*[contains(text(), 'Last updated:')]")
-			full_text = last_updated_element.find_element(By.XPATH, "./..").text
+			try: 
+				# Locate the element that includes "Last Updated" text using the Indexed element
+				last_updated_element = self.driver.find_element(By.XPATH, "//*[contains(text(), 'Last updated:')]")
+				full_text = last_updated_element.find_element(By.XPATH, "./..").text
 
-			# Extract the date using regex
-			match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', full_text)
-			if match: 
-				indexed_data["Last Updated"] = match.group(0)
+				# Extract the date using regex
+				match = re.search(r'\d{1,2}/\d{1,2}/\d{2}', full_text)
+				if match: 
+					indexed_data["Last Updated"] = match.group(0)
 
-		except NoSuchElementException:
-			print("Last updated element not found.")
+			except NoSuchElementException:
+				print("Last updated element not found.")
+		else: 
+			print("Failed to find enough data elements for Indexed Count and Last Updated.")
 
-		# Handle scenario where neither element is found
-		if not indexed_data["Indexed Count"] and not indexed_data["Last Updated"]:
-			print("Failed to find indexed page data.")
-		else:
-			print(f"Found data: {indexed_data}")
+		print(f"Found data: {indexed_data}")
 
 		return indexed_data 
 
 
 	def get_404_urls(self): 
-		try: 
-			# Navigate to the page
-			self.driver.get('https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC')
-
-			# Attempt to find and click the "Not found (404)" link
-			not_found_link = self.driver.find_element(By.CSS_SELECTOR, 
-				"span[title='Not found (404)']")
-			not_found_link.click()
-		except (NoSuchElementException, ElementClickInterceptedException):
-			# Handle the case where the link is not found or not clickable
-			print("'Not found(404)' link does not exist or is not clickable.")
-			return []
-
+		# Initialize the list at the start 
 		all_404_urls = []
+		# Navigate to page listing 404s
+		self.driver.get('https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC')
+		WebDriverWait(self.driver, 20).until(
+			EC.presence_of_element_located((By.CSS_SELECTOR, ".OOHai"))
+		)
 
 		while True: 
-			# Collect 404 URLs from the current page
-			urls_elements = self.driver.find_elements(By.CSS_SELECTOR, ".00Hai")
+			# Find all elements with the class 'OOHai' and extract their text, which are the URLs
+			# Extract all visible URLs on the page
+			urls_elements = self.driver.find_elements(By.CSS_SELECTOR, ".OOHai")
+			if not urls_elements:
+				print("No more URLs found, exiting loop.")
+				break 
+
 			for element in urls_elements: 
-				all_404_urls.append(element.text)
+				all_404_urls.append(element.text.strip())
 
+			# Try to find and click the pagination button
 			try: 
-				# Navigate the pagination button using its class
-				next_page_button = self.driver.find_element(By.CSS_SELECTOR, "span.DPvwYc.fnrFqd")
-				# Assuming the button becomes non-clickable or hidden when on the last page
+				next_page_button = WebDriverWait(self.driver, 20).until(
+					EC.element_to_be_clickable((By.CSS_SELECTOR, "span.DPvwYc.fnrFqd"))
+				)
+				# Ensure the button is visible and remove potential overlays
+				self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_button)
+				self.remove_overlays(next_page_button)
 
-				if not next_page_button.is_displayed() or not next_page_button.is_enabled():
-					break  # Exit loop if cannot paginate further
-				next_page_button.click()
-				# Wait for a moment to let the page load
-				WebDriverWait(self.driver, 7).until(
+				# Try clicking the button 
+				try: 
+					ActionChains(self.driver).move_to_element(next_page_button).click().perform()
+
+				except Exception as click_exception:
+					print("Click using ActionChains failed, trying direct script click.")
+					self.driver.execute_script("arguments[0].click();", next_page_button)
+
+				WebDriverWait(self.driver, 20).until(
 					EC.staleness_of(urls_elements[0])
 				)
-			except (NoSuchElementException, TimeoutException): 
-				break  # Exit loop if pagination button not found
 
-		return all_404_urls 
+			except TimeoutException as e:
+				print("Failed to find or click the pagination button.")
+				break
+
+			except Exception as e: 
+				print(f"An error occurred while trying to paginate: {e}")
+				break 
+
+		return all_404_urls
+
+	
+	def remove_overlays(self, target_element):
+		"""Remove overlays by changing z-index and visibility of other elements."""
+		self.driver.execute_script("""
+			var elem = arguments[0];
+			var rect = elem.getBoundingClientRect();
+			var elems = document.elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+			for (var i = 0; i < elems.length; i++) {
+				if (elems[i] !== elem) {
+					elems[i].style.display = 'none';
+				}
+			}
+			""", target_element)
 
 
 	def get_top_queries_and_clicks(self): 
@@ -167,42 +270,30 @@ class BrowserNavigator:
 
 		queries_and_clicks = {} 
 
-		while True: 
+		try:
 			# Wait for the query elements to load 
-			WebDriverWait(self.driver, 7).until(
+			WebDriverWait(self.driver, 10).until(
 				EC.presence_of_element_located((By.CSS_SELECTOR, "span.PkjLuf"))
 			)
 
 			# Extract all queries and clicks
 			queries = self.driver.find_elements(By.CSS_SELECTOR, "span.PkjLuf")
-			# Find all elements representing clicks using the additional class name
+			
 			clicks = self.driver.find_elements(By.CSS_SELECTOR, "span.CC8hte")
 
-			should_break = False 
 			for query, click in zip(queries, clicks): 
-				# Removing commas for thousands and convert to int
-				click_count = int(click.text.replace(',', ''))
-				if click_count == 0:
-					should_break = True  # Break the while loop once 0 clicks is encountered
-					break 
-				queries_and_clicks[query.text] = click_count
+				# Ensure the click text is not empty and remove commas
+				if click.text.strip() and click.text.replace(',', '').isdigit():
+					click_count = int(click.text.replace(',', ''))
+					queries_and_clicks[query.text] = click_count
+				else: 
+					print(f"Skipping empty or non-digit click count for query '{query.text}': '{click.text}'")
 
-			if should_break: 
-				break 
+			return queries_and_clicks 
 
-			try: 
-				# Check for the presence of the pagination button
-				next_page_button = self.driver.find_element(By.CSS_SELECTOR, "span.DPvwYc.fnrFqd")
-				if not next_page_button.is_displayed() or not next_page_button.is_enabled():
-					break  # Break if the pagination button is not enabled or displayed
-				next_page_button.click()
-				WebDriverWait(self.driver, 7).until(
-					EC.staleness_of(queries[0])
-				)
-			except (NoSuchElementException, TimeoutException):
-				break  # Break if no pagination button is found
-
-		return queries_and_clicks 
+		except (NoSuchElementException, TimeoutException) as e: 
+			print(f"Error fetching query data: {str(e)}")
+			return {}
 
 
 	def get_top_pages_and_clicks(self):
@@ -232,7 +323,6 @@ class BrowserNavigator:
 
 			# Check for and handle pagination
 			try: 
-				next_page_button.click()
 				WebDriverWait(self.driver, 10).until(
 					EC.staleness_of(top_pages_elements[0])
 				)
@@ -243,7 +333,7 @@ class BrowserNavigator:
 
 
 	def get_total_clicks(self): 
-		"""Returns the dictionary total_clicks_data"""
+		"""Returns the dictionary total_clicks_data with the current date as the key."""
 		self.driver.get(
 			'https://search.google.com/u/2/search-console/performance/search-analytics'
 			'?resource_id=sc-domain%3Aturnkeyofficespace.com')
@@ -263,16 +353,17 @@ class BrowserNavigator:
 			# Convert the title string to an integer
 			total_clicks = int(total_clicks_title.replace(',', ''))  # Remove commas from thousands
 
-			dates_elements = self.driver.find_elements(By.CSS_SELECTOR, "text.V67aGc > tspan")
-			if dates_elements:
-				most_recent_date = dates_elements[-1].text # Last item in list is most recent
-				total_clicks_data[most_recent_date] = total_clicks 
-			else:
-				print("No date elements found.")
+			# Get today's date in mm/dd/yy
+			current_date = datetime.now().strftime("%m/%d/%y")
+			total_clicks_data[current_date] = total_clicks 
+			print(f"Total clicks as of {current_date}: {total_clicks}")
+		
 		except NoSuchElementException:
-			print("Total clicks element or date not found.")
-	
-		return total_clicks_data 
+			print("Total clicks element not found.")
+		except ValueError: 
+			print("Error processing total clicks data.")
+
+		return total_clicks_data
 
 """
 @staticmethod decorator allows you to call the directly using the class name, without creating an instance.
@@ -315,16 +406,21 @@ class DataParser:
 		if "Last Updated" in indexed_data and isinstance(indexed_data["Indexed Count"], str):
 			# Placeholder for date parsing if necessary
 			pass
+		print("Parsed Indexed Pages Data:", indexed_data)
 
-		parsed_indexed_data = indexed_data
+		return indexed_data
 
-		return parsed_indexed_data 
 
 	@staticmethod
 	def parse_404_urls(all_404_urls):
 		"""Filter and return only valid URLs"""
+		if all_404_urls is None:
+			print("No URLs provided to parse.")
+			return []
+
 		valid_404_urls = [url for url in all_404_urls if DataParser.is_valid_url(url)]
 
+		print("Valid 404 URLs:", valid_404_urls)
 		return valid_404_urls
 
 	@staticmethod
@@ -336,23 +432,28 @@ class DataParser:
 			if isinstance(clicks, int):
 				parsed_queries_and_clicks[query] = int(clicks)
 
-		return parsed_queries_and_clicks 
+		print("Parsed Queries Data:", parsed_queries_and_clicks)
+		return parsed_queries_and_clicks
+	
 
 	@staticmethod
 	def parse_top_pages_data(page_clicks): 
 		"""Assuming 'page_clicks' is a dictionary with pages as keys and clicks as values
 		Validate URLs and ensure clicks are integers."""
+		page_clicks_parsed = {}
 		for page, clicks in page_clicks.items():
 			if isinstance(clicks, int) and DataParser.is_valid_url(page):
-				page_clicks_parsed[page] = int(clicks)
-		
-		return page_clicks_parsed 
+				page_clicks[page] = int(clicks)
+
+		print("Parsed Top Pages Data:", page_clicks_parsed)
+		return page_clicks_parsed
 
 	
 	@staticmethod
 	def parse_total_clicks_data(total_clicks_data):
 		# Additional checks performed here if needed
-		return total_clicks_data 
+		print("Parsed Total Clicks Data:", total_clicks_data)
+		return total_clicks_data
 
 
 class ExcelManager: 
@@ -364,23 +465,42 @@ class ExcelManager:
 	def update_indexed_pages(self, parsed_indexed_data): 
 		"""Updates or creates an Excel workbook for indexed page data."""
 		filepath = os.path.join(self.base_path, 'Indexed_Pages.xlsx')
-		self._update_workbook(filepath, parsed_indexed_data, ["Date", "Number of Indexed Pages"])
+		if os.path.exists(filepath): 
+			wb = load_workbook(filepath)
+			ws = wb.active
+		else: 
+			wb = Workbook() 
+			ws = wb.active 
+			# Setting the headers for the new workbook
+			ws.append(["Last Updated", "Indexed Count"])
+
+		# Adding new data under the headers
+		ws.append([parsed_indexed_data["Last Updated"], parsed_indexed_data["Indexed Count"]])
+		wb.save(filepath) 
 
 
 	def update_total_clicks_data(self, total_clicks_data):
 		"""Updates or creates an Excel workbook for total clicks data."""
 		filepath = os.path.join(self.base_path, 'Total_clicks.xlsx')
-		self._update_workbook(filepath, total_clicks_data, ["Date", "Total Clicks"])
+		self._update_workbook(filepath, total_clicks_data, ["Last Updated", "Total Clicks"])
 
 
 	def write_404_urls(self, valid_404_urls):
 		"""Writes the 404 urls into the designated Excel workbook."""
-		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "404s", valid_404_urls, ["URL"])
+		try: 
+			self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "404s", valid_404_urls, 
+				["URL", "Last Crawled"])
+		except PermissionError as e: 
+			print(f"Permission denied when trying to write to the workbook: {e}")
+		except InvalidFileException as e: 
+			print(f"Invalid file format encountered: {e}")
+		except Exception as e: 
+			print(f"An unexpected error occurred when writing to the workbook: {e}")
 
 
 	def write_queries_data(self, parsed_queries_and_clicks):
 		"""Writes query data into the Excel workbook."""
-		self.write_to_workbook("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
+		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
 			parsed_queries_and_clicks, ["Top Queries", "Clicks"])
 
 
@@ -404,25 +524,28 @@ class ExcelManager:
 
 	def save_workbook(self, workbook_name): 
 		"""Saves the workbook after all updates or changes have been made."""
-		workbook_path = os.path.join(self.base_path, workbook_name)
+		filepath = os.path.join(self.base_path, workbook_name)
 		if workbook_name in os.listdir(self.base_path): 
-			wb = load_workbook(workbook_path)
+			wb = load_workbook(filepath)
 		else: 
 			wb = Workbook()  # create a new workbook if not existing
-		wb.save(workbook_path)
+		wb.save(filepath)
 
 
 	def _update_workbook(self, filepath, data, headers):
 		"""Helper method to update or create a new Excel workbook with data."""
+		# Check if the file exists, if not, create a new workbook and sheet with headers
 		if os.path.exists(filepath): 
-			wb - load_workbook(filepath)
+			wb = load_workbook(filepath)
 			ws = wb.active 
 		else: 
 			wb = Workbook()
-			ws = wb.active() 
+			ws = wb.active 
 			ws.append(headers)  # add headers if new workbook
-		for date, value in data.items():
-			ws.append([date, value])
+
+		# Append new data
+		for key, value in data.items():
+			ws.append([key, value])
 		wb.save(filepath)
 
 
@@ -430,43 +553,62 @@ class ExcelManager:
 		"""Helper method to write data to a specific workbook and sheet.
 		Handles both dictionaries and lists as isput data."""
 		filepath = os.path.join(self.base_path, workbook_name)
-		if not os.path.exists(filepath):
-			wb = Workbook()
-			ws = wb.create_sheet(title=sheet_name)
-		else: 
+		try:
 			wb = load_workbook(filepath)
-			if sheet_name in wb.sheetnames: 
-				ws = wb[sheet_name]
-				ws.delete_rows(2, ws.max_row + 1)  # clear existing data from row 2 on
-			else: 
-				ws = wb.create_sheet(title=sheet_name)
+		except FileNotFoundError:
+			wb = Workbook()
+		except InvalidFileException:
+			print("Error: Invalid file format.")
+			return 
 
-		ws.append(headers)  # add headers for new sheet 
+		ws = wb.get_sheet_by_name(sheet_name) if sheet_name in wb.sheetnames else wb.create_sheet(title=sheet_name)
+
+		# Clear existing data from row 2 onwards to avoid duplication
+		if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
+			ws.append(headers)  # Add headers if new sheetis effectively empty
+
 
 		if isinstance(data, dict): 
 			for key, value in data.items(): 
 				ws.append([key, value])
 		elif isinstance(data, list):
-			for item in data: 
-				ws.append([item])  # each item in its own row, under the first header
+			for url in data: 
+				ws.append([url]) 
 
-		wb.save(filepath) 
+		try: 
+			wb.save(filepath)
+		except PermissionError: 
+			print("Permission denied: The file is open elsewhere.")
 
 
-	def _copy_data(self, source_file, dest_file, sheet_name):
+
+	def _copy_data(self, src_file, dest_file, sheet_name):
 		"""Copies data from source file to destination file, to appropriate sheet."""
 		src_path = os.path.join(self.base_path, src_file)
-		dest_path = os.path.join(self.base_path, dest_file) 
+		dest_path = os.path.join(self.base_path, dest_file)
+
+		# Load the source workbook and select the active sheet (assuming data is on the active sheet) 
 		src_wb = load_workbook(src_path)
 		src_ws = src_wb.active
-		dest_wb = load_workbook(dest_path)
-		if sheet_name in dest_wb.sheetnames:
+
+		# Load the destination workbook, create a new sheet if the specified sheet_name does not exist
+		dest_wb = load_workbook(dest_path) if os.path.exists(dest_path) else Workbook()
+		if sheet_name in dest_wb.sheetnames: 
 			dest_ws = dest_wb[sheet_name]
-			dest_wb.remove(dest_ws)
-		dest_ws = dest_wb.create_sheet(title=aheet_name)
-		for row in src_ws.iter_rows():
-			dest_ws.append([cell.value for cell in row])
-		dest_wb.save(dest_path) 
+		else: 
+			dest_ws = dest_wb.create_sheet(title=sheet_name)
+			# Set headers the same as in the source file, copy them 
+			headers = [cell.value for cell in src_ws[1]]
+			dest_ws.append(headers)
+
+		# Copy data from source to destination
+		for row in src_ws.iter_rows(min_row=2):
+			row_data = [cell.value for cell in row]
+			dest_ws.append(row_data)
+
+		# Save the modified destination workbook
+		dest_wb.save(dest_path)
+		print(f"Data copied sucessfully from {src_file} to {sheet_name} in {dest_file}.") 
 
 
 
@@ -475,19 +617,10 @@ class ExcelManager:
 
 
 
-
-
-
-
-
-
-
-
-
-
-# report_generator = SEOReportGenerator()
-# report_generator.run()
-# report_generator.close()
+report_generator = SEOReportGenerator()
+report_generator.login()
+report_generator.run()
+report_generator.close()
 
 
 
