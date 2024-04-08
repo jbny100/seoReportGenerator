@@ -2,4 +2,8 @@ Below commits use command 'git log' to retrieve
 
 "first commit" - 7ffcad58a352dd33d52a850636aab487cd7a70a2
 
-"Second commit" - 5e8630848cf6767cd2863cce52604b138e622d12
+"second commit" - 5e8630848cf6767cd2863cce52604b138e622d12
+
+"third commit" - 5617b1c848a7615c123746c5cedb2b74efbcbb1a
+
+"fourth commit" - 

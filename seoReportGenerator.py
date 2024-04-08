@@ -111,9 +111,9 @@ class SEOReportGenerator:
 		self.excel_manager.copy_indexed_pages()  # copy updated Indexed Pages to Monthly_SEO_Metrics.xlsx
 
 		# 404s Data 
-		not_found_urls = self.browser_navigator.get_404_urls()
-		not_found_data = self.data_parser.parse_404_urls(not_found_urls)
-		self.excel_manager.write_404_urls(not_found_data)
+		all_404_urls = self.browser_navigator.get_404_urls()
+		valid_404_urls = self.data_parser.parse_404_urls(all_404_urls)
+		self.excel_manager.write_404_urls(valid_404_urls)
 
 		# Queries Last 3 Months Data 
 		query_searches = self.browser_navigator.get_top_queries_and_clicks()
@@ -197,70 +197,49 @@ class BrowserNavigator:
 		return indexed_data 
 
 
+	def wait_for_download_complete(self, filename_prefix, timeout=25):
+		start_time = time.time()
+		while True:
+			files = [f for f in os.listdir(self.download_path) if f.startswith(filename_prefix) and 
+			f.endswith('.xlsx')]
+			if files: 
+				return os.path.join(self.download_path, files[0])
+			elif time.time() - start_time > timeout:
+				raise TimeoutException("Timed out waiting for download to complete.")
+			time.sleep(1)
+
+
 	def get_404_urls(self): 
-		# Initialize the list at the start 
-		all_404_urls = []
 		# Navigate to page listing 404s
-		self.driver.get('https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC')
+		url = 'https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC'
+		self.driver.get(url)
 		WebDriverWait(self.driver, 20).until(
-			EC.presence_of_element_located((By.CSS_SELECTOR, ".OOHai"))
+			EC.presence_of_element_located((By.CSS_SELECTOR, ".izuYW"))
 		)
 
-		while True: 
-			# Find all elements with the class 'OOHai' and extract their text, which are the URLs
-			# Extract all visible URLs on the page
-			urls_elements = self.driver.find_elements(By.CSS_SELECTOR, ".OOHai")
-			if not urls_elements:
-				print("No more URLs found, exiting loop.")
-				break 
+		# Click the EXPORT button
+		export_button = self.driver.find_element(By.CSS_SELECTOR, "span.izuYW")
+		export_button.click()
 
-			for element in urls_elements: 
-				all_404_urls.append(element.text.strip())
+		# Wait and click 'Download Excel'
+		WebDriverWait(self.driver, 10).until(
+			EC.visibility_of_element_located((By.XPATH, "//div[text()='Download Excel']"))
+		).click()
 
-			# Try to find and click the pagination button
-			try: 
-				next_page_button = WebDriverWait(self.driver, 20).until(
-					EC.element_to_be_clickable((By.CSS_SELECTOR, "span.DPvwYc.fnrFqd"))
-				)
-				# Ensure the button is visible and remove potential overlays
-				self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_button)
-				self.remove_overlays(next_page_button)
+		# Use the wait_for_download_complete method to ensure the file is fully downloaded
+		filename_prefix = "turnkeyofficespace.com-Coverage-Drilldown"
+		latest_file = self.wait_for_download_complete(filename_prefix)
 
-				# Try clicking the button 
-				try: 
-					ActionChains(self.driver).move_to_element(next_page_button).click().perform()
+		# Open and read the Excel file
+		wb = load_workbook(latest_file)
+		sheet = wb["Table"]
+		all_404_urls = {row[0]: row[1] for row in sheet.iter_rows(min_row=2, values_only=True) if row[0]}
 
-				except Exception as click_exception:
-					print("Click using ActionChains failed, trying direct script click.")
-					self.driver.execute_script("arguments[0].click();", next_page_button)
 
-				WebDriverWait(self.driver, 20).until(
-					EC.staleness_of(urls_elements[0])
-				)
-
-			except TimeoutException as e:
-				print("Failed to find or click the pagination button.")
-				break
-
-			except Exception as e: 
-				print(f"An error occurred while trying to paginate: {e}")
-				break 
+		# Optionally, remove the file if no longer needed
+		os.remove(latest_file)
 
 		return all_404_urls
-
-	
-	def remove_overlays(self, target_element):
-		"""Remove overlays by changing z-index and visibility of other elements."""
-		self.driver.execute_script("""
-			var elem = arguments[0];
-			var rect = elem.getBoundingClientRect();
-			var elems = document.elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
-			for (var i = 0; i < elems.length; i++) {
-				if (elems[i] !== elem) {
-					elems[i].style.display = 'none';
-				}
-			}
-			""", target_element)
 
 
 	def get_top_queries_and_clicks(self): 
@@ -413,12 +392,15 @@ class DataParser:
 
 	@staticmethod
 	def parse_404_urls(all_404_urls):
-		"""Filter and return only valid URLs"""
-		if all_404_urls is None:
+		"""Simply returns the dictionary of 404 URLs and their last crawled dates"""
+		if not all_404_urls:
 			print("No URLs provided to parse.")
-			return []
+			return {}
 
-		valid_404_urls = [url for url in all_404_urls if DataParser.is_valid_url(url)]
+		valid_404_urls = {} 
+		for url, last_crawled in all_404_urls.items(): 
+			if DataParser.is_valid_url(url):
+				valid_404_urls[url] = last_crawled
 
 		print("Valid 404 URLs:", valid_404_urls)
 		return valid_404_urls
@@ -486,18 +468,16 @@ class ExcelManager:
 
 
 	def write_404_urls(self, valid_404_urls):
-		"""Writes the 404 urls into the designated Excel workbook."""
-		try: 
-			self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "404s", valid_404_urls, 
-				["URL", "Last Crawled"])
-		except PermissionError as e: 
-			print(f"Permission denied when trying to write to the workbook: {e}")
-		except InvalidFileException as e: 
-			print(f"Invalid file format encountered: {e}")
-		except Exception as e: 
-			print(f"An unexpected error occurred when writing to the workbook: {e}")
+		"""Writes the validated 404 urls and their last crawled dates into the 
+		designated Excel workbook."""
+		workbook_name = "Monthly_SEO_Metrics.xlsx"
+		sheet_name = "404s"
+		headers = ["URL", "Last Crawled"]
 
+		# Use the helper method to write this data to the workbook
+		self._write_to_workbook(workbook_name, sheet_name, valid_404_urls, headers)
 
+		
 	def write_queries_data(self, parsed_queries_and_clicks):
 		"""Writes query data into the Excel workbook."""
 		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
@@ -557,6 +537,7 @@ class ExcelManager:
 			wb = load_workbook(filepath)
 		except FileNotFoundError:
 			wb = Workbook()
+			wb.create_sheet(title=sheet_name)
 		except InvalidFileException:
 			print("Error: Invalid file format.")
 			return 
@@ -564,16 +545,22 @@ class ExcelManager:
 		ws = wb.get_sheet_by_name(sheet_name) if sheet_name in wb.sheetnames else wb.create_sheet(title=sheet_name)
 
 		# Clear existing data from row 2 onwards to avoid duplication
+		if ws.max_row > 1: 
+			for row in ws.iter_rows(min_row=2, max_row=ws.max_row): 
+				ws.delete_rows(row[0].row)
+
+		# Ensure headers are set for a new sheet
 		if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
 			ws.append(headers)  # Add headers if new sheetis effectively empty
 
-
+		# Write data
 		if isinstance(data, dict): 
 			for key, value in data.items(): 
 				ws.append([key, value])
+
 		elif isinstance(data, list):
-			for url in data: 
-				ws.append([url]) 
+			for item in data: 
+				ws.append([item]) 
 
 		try: 
 			wb.save(filepath)
