@@ -1,3 +1,4 @@
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -103,48 +104,42 @@ class SEOReportGenerator:
 
 	# At what point in the following workflow should "Monthly_SEO_Metrics.xlsx" be created?
 	def run(self): 
-		try:
-			# Initialize or open the main workbook
-			monthly_metrics_path = os.path.join(self.base_path, "Monthly_SEO_Metrics.xlsx")
-			workbook = load_workbook(monthly_metrics_path) if os.path.exists(monthly_metrics_path) else Workbook()
-			workbook.save(monthly_metrics_path)  # Save immediately to ensure it exists for further processing
+		# Initialize or open the main workbook
+		monthly_metrics_path = os.path.join(self.base_path, "Monthly_SEO_Metrics.xlsx")
+		workbook = load_workbook(monthly_metrics_path) if os.path.exists(monthly_metrics_path) else Workbook()
+		workbook.save(monthly_metrics_path)  # Save immediately to ensure it exists for further processing
 
-			# Navigate to the initial URL of Google Search Console
-			self.browser_navigator.navigate_to_console()
+		# Navigate to the initial URL of Google Search Console
+		self.browser_navigator.navigate_to_console()
 
-			"""HTML content is obtained and passed to DataParser for each type of data required"""
+		"""HTML content is obtained and passed to DataParser for each type of data required"""
 
-			# Indexed Pages Data
-			indexed_pages = self.browser_navigator.get_indexed_pages()
-			indexed_data = self.data_parser.parse_indexed_pages(indexed_pages)
-			self.excel_manager.update_indexed_pages(indexed_data)
-			self.excel_manager._copy_data('Indexed_Pages.xlsx', 'Monthly_SEO_Metrics.xlsx', 'Indexed Pages')
+		# Indexed Pages Data
+		indexed_pages = self.browser_navigator.get_indexed_pages()
+		indexed_data = self.data_parser.parse_indexed_pages(indexed_pages)
+		self.excel_manager.update_indexed_pages(indexed_data)
+		self.excel_manager.copy_indexed_pages()
+		# self.excel_manager._copy_data('Indexed_Pages.xlsx', 'Monthly_SEO_Metrics.xlsx', 'Indexed Pages')
 
-			# 404s Data 
-			all_404_urls = self.browser_navigator.get_404_urls()
-			valid_404_urls = self.data_parser.parse_404_urls(all_404_urls)
-			self.excel_manager.write_404_urls(valid_404_urls)
+		# 404s Data 
+		all_404_urls = self.browser_navigator.get_404_urls()
+		valid_404_urls = self.data_parser.parse_404_urls(all_404_urls)
+		self.excel_manager.write_404_urls(valid_404_urls)
 
-			# Performance Data (Queries and Top Pages)
-			latest_file = self.browser_navigator.get_performance_data()
-			self.excel_manager.write_performance_data(latest_file)
+		# Performance Data (Queries and Top Pages)
+		latest_file = self.browser_navigator.get_performance_data()
+		self.excel_manager.write_performance_data(latest_file)
 
-			# Total Clicks Last 3 Months Data
-			total_organic_clicks = self.browser_navigator.get_total_clicks()
-			total_clicks_data = self.data_parser.parse_total_clicks_data(total_organic_clicks)
-			self.excel_manager.update_total_clicks_data('Total_Clicks.xlsx', total_clicks_data)
-			self.excel_manager._copy_data('Total_Clicks.xlsx', 'Monthly_SEO_Metrics.xlsx', 'Total Clicks')
-			# self.excel_manager.copy_total_clicks()  # copy updated Total Clicks to Monthly_SEO_Metrics.xlsx
+		# Total Clicks Last 3 Months Data
+		total_organic_clicks = self.browser_navigator.get_total_clicks()
+		total_clicks_data = self.data_parser.parse_total_clicks_data(total_organic_clicks)
+		self.excel_manager.update_total_clicks_data(total_clicks_data)
+		self.excel_manager.copy_total_clicks()
+		# self.excel_manager.copy_total_clicks()  # copy updated Total Clicks to Monthly_SEO_Metrics.xlsx
 
 
-			# Save the workbook after all updates
-			workbook.save(monthly_metrics_path)
-
-		except Exception as e:
-			print(f"An error occurred: {str(e)}")
-		finally:
-			# Keep the browser open until the user decides to close it
-			input("Press Enter to exit...")
+		# Save the workbook after all updates
+		workbook.save(monthly_metrics_path)
 
 
 	def close(self): 
@@ -211,19 +206,21 @@ class BrowserNavigator:
 
 	def wait_for_download_complete(self, filename_prefix, timeout=25):
 		start_time = time.time()
+		initial_delay = 10  # Wait 10 seconds before the first check
+		time.sleep(initial_delay)  # Allow some time for the download to initiate
 		while True:
-			files = [f for f in os.listdir(self.download_path) if f.startswith(filename_prefix) and 
-			f.endswith('.xlsx')]
+			files = [f for f in os.listdir(self.download_path) if f.startswith(filename_prefix) and f.endswith('.xlsx')]
 			if files: 
 				return os.path.join(self.download_path, files[0])
 			elif time.time() - start_time > timeout:
+				self.driver.save_screenshot('timeout_failure.png')
 				raise TimeoutException("Timed out waiting for download to complete.")
 			time.sleep(1)
 
 
 	def get_404_urls(self): 
 		# Navigate to page listing 404s
-		url = 'https://search.google.com/u/0/search-console/index/drilldown?resource_id=sc-domain:turnkeyofficespace.com&item_key=CAMYDSAC'
+		url = 'https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC'
 		self.driver.get(url)
 		WebDriverWait(self.driver, 20).until(
 			EC.presence_of_element_located((By.CSS_SELECTOR, ".izuYW"))
@@ -258,28 +255,38 @@ class BrowserNavigator:
 		"""Method responsible for opening downloaded workbook, extracting data 
 		from 'Queries' and 'Pages' sheets, and writing them to the 
 		'Monthly_SEO_Metrics.xlsx' workbook."""
-		self.driver.get(
-			'https://search.google.com/u/2/search-console/performance/search-analytics'
-			'?resource_id=sc-domain%3Aturnkeyofficespace.com&breakdown=query')
-		# Wait for the query elements to load 
-		WebDriverWait(self.driver, 10).until(
-			EC.presence_of_element_located((By.CSS_SELECTOR, ".izuYW"))
-		)
+		try: 
+			url = 'https://search.google.com/u/0/search-console/performance/search-analytics?resource_id=sc-domain:turnkeyofficespace.com&breakdown'
+			self.driver.get(url)
 
-		# Click the EXPORT button
-		export_button = self.driver.find_element(By.CSS_SELECTOR, "span.izuYW")
-		export_button.click()
+			print("Navigating to the performance page...")
+			WebDriverWait(self.driver, 20).until(
+				EC.presence_of_element_located((By.CSS_SELECTOR, ".izuYW"))
+			)
+			print("Attempting to find and click the EXPORT button...")
+			export_button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.izuYW")))
+			export_button.click()
+			print("EXPORT button clicked.")
 
-		# Wait and click 'Download Excel'
-		WebDriverWait(self.driver, 10).until(
-			EC.visibility_of_element_located((By.XPATH, "//div[text()='Download Excel']"))
-		).click()
+			print("Attempting to find and click 'Download Excel'...")
+			download_excel_button = WebDriverWait(self.driver, 10).until(
+				EC.element_to_be_clickable((By.XPATH, "//div[text()='Download Excel']"))
+			)
+			download_excel_button.click()
+			print("Download Excel clicked.")
 
-		# Wait for the file to download
-		filename_prefix = "turnkeyofficespace.com-Performance-on-Search"
-		latest_file = self.wait_for_download_complete(filename_prefix)
+			filename_prefix = "turnkeyofficespace.com-Performance-on-Search"
+			latest_file = self.wait_for_download_complete(filename_prefix)
 
-		return latest_file
+			if latest_file:
+				print(f"File downloaded: {latest_file}")
+				return latest_file
+			else: 
+				raise Exception("Download failed, no file found.")
+
+		except Exception as e: 
+			print(f"Error during download initiation: {str(e)}")
+			return None
 
 
 	def get_total_clicks(self): 
@@ -305,7 +312,8 @@ class BrowserNavigator:
 
 			# Get today's date in mm/dd/yy
 			current_date = datetime.now().strftime("%m/%d/%y")
-			total_clicks_data[current_date] = total_clicks 
+			total_clicks_data = {"Last Updated": current_date, "Total Clicks": total_clicks}
+
 			print(f"Total clicks as of {current_date}: {total_clicks}")
 		
 		except NoSuchElementException:
@@ -411,18 +419,28 @@ class ExcelManager:
 		ws.append([indexed_data["Last Updated"], indexed_data["Indexed Count"]])
 		wb.save(filepath)
 		
-	def update_total_clicks_data(self, workbook, total_clicks_data):
-		"""Updates or creates an Excel sheet for total clicks data within the provided workbook."""
-		if 'Total Clicks' not in workbook.sheetnames: 
-			ws = workbook.create_sheet('Total Clicks')
-			ws.append(["Last Updated", "Total Clicks"])  # Define headers specific to your needs
-		else: 
-			ws = workbook['Total Clicks']
+	def update_total_clicks_data(self, total_clicks_data):
+		"""Updates or creates an Excel workbook for total clicks data within the provided workbook."""
+		filepath = os.path.join(self.base_path, 'Total_Clicks.xlsx')
+		# Load the workbook if it exists, otherwise create a new one
+		if os.path.exists(filepath):
+			wb = load_workbook(filepath)
+		else:
+			wb = Workbook()
+			ws = wb.create_sheet("Total Clicks")
+			ws.append(["Last Updated", "Total Clicks"])  # Ensure headers match dictionary keys
 
-		# Adding new data under the headers
-		for date, clicks in total_clicks_data.items():
-			ws.append([date, clicks])
+		# Check if the 'Total Clicks' sheet exists, otherwise create it
+		if 'Total Clicks' in wb.sheetnames:
+			ws = wb['Total Clicks']
+		else:
+			ws = wb.create_sheet('Total Clicks')
+			ws.append(["Last Updated", "Total Clicks"])  # Set headers
 
+		# Append new data under the headers
+		ws.append([total_clicks_data["Last Updated"], total_clicks_data["Total Clicks"]])
+		wb.save(filepath)  # Save the workbook after modifications
+ 
 
 	def write_404_urls(self, valid_404_urls):
 		"""Writes validated 404 urls into 'Monthly_SEO_Metrics.xlsx'."""
@@ -438,24 +456,58 @@ class ExcelManager:
 	def write_performance_data(self, latest_file):
 		"""Write performance data from downloaded file into the specified workbook."""
 		# Load the performance_data workbook
-		performance_wb = load_workbook(file_path)
-		queries_sheet = performance_wb['Queries']
-		pages_sheet = performance_wb['Pages']
+		try:
+			performance_wb = load_workbook(latest_file)
+			queries_sheet = performance_wb['Queries']
+			pages_sheet = performance_wb['Pages']
 
-		self._write_sheet_data("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
-			queries_sheet, ["Top queries", "Clicks", "Impressions", "CTR", "Position"])
-		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "Top Pages Last 3 Months", 
-			pages_sheet, ["Top pages", "Clicks", "Impressions", "CTR", "Position"])
+			# Headers for each sheet
+			queries_headers = ["Top queries", "Clicks", "Impressions", "CTR", "Position"]
+			pages_headers = ["Top pages", "Clicks", "Impressions", "CTR", "Position"]
 
-		# Remove the downloaded file
-		os.remove(latest_file)  # Cleanup the downloaded file after processing 
+			# Write data to 'Queries Last 3 Months' and 'Top Pages Last 3 Months'
+			self._write_sheet_data("Monthly_SEO_Metrics.xlsx", "Queries Last 3 Months", 
+				queries_sheet, queries_headers)
+
+			self._write_sheet_data("Monthly_SEO_Metrics.xlsx", "Top Pages Last 3 Months", 
+				pages_sheet, pages_headers)
+
+			# Remove the downloaded file
+			os.remove(latest_file)
+			print("Downloaded file removed and performance data successfully written.")
+
+		except Exception as e:
+			print(f"Error processing performance data: {e}")
+			# Optionally remove the file even on failure if no further analysis or retries are intended
+			if os.path.exists(latest_file):
+				os.remove(latest_file)
+				print("Downloaded file removed after encountering an error.")
 
 
-	def _write_sheet_data(self, workbook, sheet_title, source_sheet):
-		ws = workbook.get_sheet_by_name(sheet_title) if sheet_title in workbook.sheetnames else workbook.create_sheet(sheet_title)
-		for row in source_sheet.iter_rows(values_only=True):
+	def _write_sheet_data(self, workbook_name, sheet_title, source_sheet, headers):
+		# Load or create the workbook 
+		try:
+			# Load the destination workbook or create a new one if it doesn't exist
+			wb = load_workbook(workbook_name)
+		except FileNotFoundError:
+			wb = Workbook()
+			wb.remove(wb.active)  # Remove default sheet if new workbook
+
+		# Get or create the sheet within the workbook
+		if sheet_title in wb.sheetnames:
+			ws = wb[sheet_title]
+		else:
+			ws = wb.create_sheet(title=sheet_title)
+			# Set headers if new sheet
+			ws.append(headers)
+
+		# Write rows from the source sheet, starting from second row
+		for row in source_sheet.iter_rows(min_row=2, values_only=True):  # skips header row
 			ws.append(row)
 
+		# Save the changes 
+		wb.save(workbook_name)
+		print(f"Data written to sheet {sheet_title} in {workbook_name}")
 
 
 	def write_top_pages_data(self, page_clicks_parsed): 
@@ -468,13 +520,13 @@ class ExcelManager:
 	def copy_indexed_pages(self):
 		"""Copies indexed pages data from the Indexed_Pages.xlsx to the 
 		Monthly_SEO_Metrics.xlsx workbook."""
-		self._copy_data("Indexed_Pages.xlsx", "Monthly_SEO_Metrics.xlsx", "Indexed Pages")
+		self._copy_data("Indexed_Pages.xlsx", "Monthly_SEO_Metrics.xlsx", "Indexed Data", "Indexed Pages")
 
 
 	def copy_total_clicks(self): 
 		"""Copies total clicks data from the Total_Clicks.xlsx to the 
 		Monthly_SEO_Metrics.xlsx workbook."""
-		self._copy_data("Total_Clicks.xlsx", "Monthly_SEO_Metrics.xlsx", "Total Clicks Last 3 Months")
+		self._copy_data("Total_Clicks.xlsx", "Monthly_SEO_Metrics.xlsx", "Total Clicks", "Total Clicks Last 3 Months")
 
 
 	def save_workbook(self, workbook, workbook_name): 
@@ -538,22 +590,21 @@ class ExcelManager:
 		except PermissionError: 
 			print("Permission denied: The file is open elsewhere.")
 
-
-	def _copy_data(self, src_file, dest_file, sheet_name):
+	def _copy_data(self, src_file, dest_file, src_sheet_name, dest_sheet_name):
 		"""Copies data from source file to destination file, to appropriate sheet."""
 		src_path = os.path.join(self.base_path, src_file)
 		dest_path = os.path.join(self.base_path, dest_file)
 
 		# Load the source workbook and select the active sheet (assuming data is on the active sheet) 
 		src_wb = load_workbook(src_path)
-		src_ws = src_wb["Indexed Data"]
+		src_ws = src_wb[src_sheet_name]
 
 		# Load the destination workbook, create a new sheet if the specified sheet_name does not exist
 		dest_wb = load_workbook(dest_path) if os.path.exists(dest_path) else Workbook()
-		if sheet_name in dest_wb.sheetnames:
-			dest_ws = dest_wb[sheet_name]
+		if dest_sheet_name in dest_wb.sheetnames:
+			dest_ws = dest_wb[dest_sheet_name]
 		else:
-			dest_ws = dest_wb.create_sheet(title=sheet_name)
+			dest_ws = dest_wb.create_sheet(dest_sheet_name)
 			# Add headers if creating a new sheet
 			headers = [cell.value for cell in src_ws[1]]
 			dest_ws.append(headers)
@@ -565,7 +616,7 @@ class ExcelManager:
 
 		# Save the modified destination workbook
 		dest_wb.save(dest_path)
-		print(f"Data copied sucessfully from {src_file} to {sheet_name} in {dest_file}.")
+		print(f"Data copied sucessfully from {src_file} to {dest_sheet_name} in {dest_file}.")
 		src_wb.close()  # Ensure the workbook is closed after operation
 
 
@@ -573,5 +624,4 @@ class ExcelManager:
 report_generator = SEOReportGenerator()
 report_generator.login()
 report_generator.run()
-# report_generator.close()
-
+report_generator.close()
