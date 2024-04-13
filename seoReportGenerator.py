@@ -4,10 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.common.exceptions import ElementClickInterceptedException
-from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_utility import WebDriverUtility
-from bs4 import BeautifulSoup
 from openpyxl import Workbook, load_workbook 
 from openpyxl.utils import get_column_letter
 import os 
@@ -510,13 +507,6 @@ class ExcelManager:
 		print(f"Data written to sheet {sheet_title} in {workbook_name}")
 
 
-	def write_top_pages_data(self, page_clicks_parsed): 
-		"""Writes top pages data into the Excel workbook."""
-
-		self._write_to_workbook("Monthly_SEO_Metrics.xlsx", "Top Pages Last 3 Months", 
-			page_clicks_parsed, ["Top Pages", "Clicks"])
-
-
 	def copy_indexed_pages(self):
 		"""Copies indexed pages data from the Indexed_Pages.xlsx to the 
 		Monthly_SEO_Metrics.xlsx workbook."""
@@ -529,10 +519,19 @@ class ExcelManager:
 		self._copy_data("Total_Clicks.xlsx", "Monthly_SEO_Metrics.xlsx", "Total Clicks", "Total Clicks Last 3 Months")
 
 
-	def save_workbook(self, workbook, workbook_name): 
+	def save_workbook(self, workbook_name): 
 		"""Saves the workbook after all updates or changes have been made."""
 		filepath = os.path.join(self.base_path, workbook_name)
-		workbook.save(filepath)
+		wb = load_workbook(filepath)
+		
+		# Check if the default sheet "Sheet" is empty and remove it
+		if "Sheet" in wb.sheetnames and all(cell.value is None for row in wb['Sheet'] for 
+			cell in row):
+			std_wb = wb['Sheet']
+			wb.remove(std_wb)
+
+		wb.save(filepath)
+		print(f"{workbook_name} saved and cleaned up.")
 
 
 	def _update_workbook(self, filepath, data, headers):
@@ -550,45 +549,6 @@ class ExcelManager:
 		for key, value in data.items():
 			ws.append([key, value])
 		wb.save(filepath)
-
-
-	def _write_to_workbook(self, workbook_name, sheet_name, data, headers): 
-		"""Helper method to write data to a specific workbook and sheet.
-		Handles both dictionaries and lists as input data."""
-		filepath = os.path.join(self.base_path, workbook_name)
-		try:
-			wb = load_workbook(filepath)
-		except FileNotFoundError:
-			wb = Workbook()
-			wb.create_sheet(title=sheet_name)
-		except InvalidFileException:
-			print("Error: Invalid file format.")
-			return 
-
-		ws = wb.get_sheet_by_name(sheet_name) if sheet_name in wb.sheetnames else wb.create_sheet(title=sheet_name)
-
-		# Clear existing data from row 2 onwards to avoid duplication
-		if ws.max_row > 1: 
-			for row in ws.iter_rows(min_row=2, max_row=ws.max_row): 
-				ws.delete_rows(row[0].row)
-
-		# Ensure headers are set for a new sheet
-		if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
-			ws.append(headers)  # Add headers if new sheetis effectively empty
-
-		# Write data
-		if isinstance(data, dict): 
-			for key, value in data.items(): 
-				ws.append([key, value])
-
-		elif isinstance(data, list):
-			for item in data: 
-				ws.append([item]) 
-
-		try: 
-			wb.save(filepath)
-		except PermissionError: 
-			print("Permission denied: The file is open elsewhere.")
 
 
 	def _copy_data(self, src_file, dest_file, src_sheet_name, dest_sheet_name):
