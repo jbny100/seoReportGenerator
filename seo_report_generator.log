@@ -1,0 +1,64 @@
+2024-04-12 11:54:53,467:INFO:Starting the SEO Report Generator
+2024-04-12 11:55:49,521:INFO:Navigating to Google Search Console
+2024-04-12 11:55:52,336:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (9).xlsx
+2024-04-12 11:55:52,351:INFO:Getting performance data
+2024-04-12 11:56:23,641:ERROR:Download timed out.
+2024-04-12 11:56:23,740:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 11:56:23,740:INFO:Saving the workbook and closing the program
+2024-04-12 11:56:23,740:INFO:Saving the workbook and closing the program
+2024-04-12 12:01:57,909:INFO:Starting the SEO Report Generator
+2024-04-12 12:02:49,250:INFO:Navigating to Google Search Console
+2024-04-12 12:02:52,284:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (9).xlsx
+2024-04-12 12:02:52,301:INFO:Getting performance data
+2024-04-12 12:03:23,595:ERROR:Download timed out.
+2024-04-12 12:03:23,689:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 12:03:23,690:INFO:Saving the workbook and closing the program
+2024-04-12 12:03:23,815:WARNING:Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x117ae3710>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/1eccb420ffa585c68ad90b9128a82896
+2024-04-12 12:03:23,815:WARNING:Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x117b3ff10>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/1eccb420ffa585c68ad90b9128a82896
+2024-04-12 12:03:23,816:WARNING:Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x117b15bd0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/1eccb420ffa585c68ad90b9128a82896
+2024-04-12 12:04:03,840:INFO:Starting the SEO Report Generator
+2024-04-12 12:04:57,039:INFO:Navigating to Google Search Console
+2024-04-12 12:05:00,589:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (9).xlsx
+2024-04-12 12:05:00,606:INFO:Getting performance data
+2024-04-12 12:05:31,840:ERROR:Download timed out.
+2024-04-12 12:05:31,915:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 12:05:31,915:INFO:Saving the workbook and closing the program
+2024-04-12 12:05:32,025:WARNING:Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x108655c50>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/770e2b760e98332bd8d6c41cf20c5f49
+2024-04-12 12:05:32,025:WARNING:Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1086942d0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/770e2b760e98332bd8d6c41cf20c5f49
+2024-04-12 12:05:32,025:WARNING:Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10867f790>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/770e2b760e98332bd8d6c41cf20c5f49
+2024-04-12 12:06:31,360:INFO:Starting the SEO Report Generator
+2024-04-12 12:07:22,669:INFO:Navigating to Google Search Console
+2024-04-12 12:07:25,620:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (19).xlsx
+2024-04-12 12:07:25,635:INFO:Getting performance data
+2024-04-12 12:07:56,881:ERROR:Download timed out.
+2024-04-12 12:07:56,956:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 12:07:56,956:INFO:Saving the workbook and closing the program
+2024-04-12 12:07:57,065:WARNING:Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10f23e550>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/e783d4d4c588d6ffaaff871edf5a48d3
+2024-04-12 12:07:57,065:WARNING:Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10f23db90>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/e783d4d4c588d6ffaaff871edf5a48d3
+2024-04-12 12:07:57,066:WARNING:Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10f26f650>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/e783d4d4c588d6ffaaff871edf5a48d3
+2024-04-12 12:10:06,514:INFO:Starting the SEO Report Generator
+2024-04-12 12:11:06,976:INFO:Navigating to Google Search Console
+2024-04-12 12:11:10,971:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (20).xlsx
+2024-04-12 12:11:10,987:INFO:Getting performance data
+2024-04-12 12:11:42,164:ERROR:Download timed out.
+2024-04-12 12:11:42,240:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 12:11:42,240:INFO:Saving the workbook and closing the program
+2024-04-12 12:11:42,349:WARNING:Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x118380c50>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/92b530ed6c500ebb7c901d81d58052ea
+2024-04-12 12:11:42,350:WARNING:Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x118382210>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/92b530ed6c500ebb7c901d81d58052ea
+2024-04-12 12:11:42,350:WARNING:Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x118383290>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/92b530ed6c500ebb7c901d81d58052ea
+2024-04-12 12:12:52,735:INFO:Starting the SEO Report Generator
+2024-04-12 12:13:43,684:INFO:Navigating to Google Search Console
+2024-04-12 12:13:46,405:INFO:Download completed: turnkeyofficespace.com-Coverage-Drilldown-2024-04-12 (20).xlsx
+2024-04-12 12:13:46,421:INFO:Getting performance data
+2024-04-12 12:14:17,593:ERROR:Download timed out.
+2024-04-12 12:14:17,700:ERROR:An error occurred: Message: Timed out waiting for download to complete.
+
+2024-04-12 12:14:17,700:INFO:Saving the workbook and closing the program
+2024-04-12 12:14:17,795:WARNING:Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10837a3d0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/77bf74a8fc2bf243ea69557a9b8cc559
+2024-04-12 12:14:17,796:WARNING:Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10837bb90>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/77bf74a8fc2bf243ea69557a9b8cc559
+2024-04-12 12:14:17,796:WARNING:Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1083a3ed0>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/77bf74a8fc2bf243ea69557a9b8cc559
