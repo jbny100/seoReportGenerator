@@ -1,3 +1,4 @@
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,6 +12,7 @@ import re
 import time 
 from datetime import datetime 
 from urllib.parse import urlparse
+import logging
 
 
 class SEOReportGenerator: 
@@ -99,6 +101,7 @@ class SEOReportGenerator:
 			self.driver.save_screenshot('2fa_error.png')  # save a screenshot for debugging 
 
 	# At what point in the following workflow should "Monthly_SEO_Metrics.xlsx" be created?
+
 	def run(self): 
 		# Initialize or open the main workbook
 		monthly_metrics_path = os.path.join(self.base_path, "Monthly_SEO_Metrics.xlsx")
@@ -392,7 +395,6 @@ class ExcelManager:
 
 	def __init__(self, base_path): 
 		self.base_path = base_path  # Directory to save Excel files
-		self.workbooks = {}  # Dictionary to hold open workbooks
 
 
 	def update_indexed_pages(self, indexed_data): 

@@ -1,0 +1,122 @@
+2024-04-13 19:39:04,771 - INFO - Navigating to the login page...
+2024-04-13 19:39:05,533 - INFO - Page loaded, attempting to fill username...
+2024-04-13 19:39:05,743 - INFO - Username entered, waiting for password filed...
+2024-04-13 19:39:22,769 - INFO - Password field available, entering password...
+2024-04-13 19:39:22,853 - INFO - Password submitted, waiting for 2FA prompt...
+2024-04-13 19:39:53,216 - ERROR - 2FA input field not found or Next button not clickable.
+2024-04-13 19:39:56,008 - INFO - Navigated to https://search.google.com/u/2/search-console/index?resource_id=sc-domain:turnkeyofficespace.com
+2024-04-13 19:39:56,016 - INFO - Navigatied to console and page in loaded.
+2024-04-13 19:39:56,596 - INFO - Navigated to https://search.google.com/u/2/search-console/index?resource_id=sc-domain:turnkeyofficespace.com
+2024-04-13 19:39:56,601 - INFO - Navigatied to console and page in loaded.
+2024-04-13 19:39:56,634 - INFO - Indexed data found: {'Last Updated': '4/8/24', 'Indexed Count': '1,837'}
+2024-04-13 19:39:56,634 - INFO - Found data: {'Last Updated': '4/8/24', 'Indexed Count': '1,837'}
+2024-04-13 19:39:56,634 - INFO - Indexed Pages Data parsed: {'Last Updated': '4/8/24', 'Indexed Count': 1837}
+2024-04-13 19:39:56,637 - INFO - Found existing 'Indexed Data' sheet.
+2024-04-13 19:39:56,639 - INFO - Indexed data updated successfully in '/Users/jonathanbachrach/Projects/SEOReportGenerator/Indexed_Pages.xlsx'.
+2024-04-13 19:39:56,639 - INFO - Loading source workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Indexed_Pages.xlsx
+2024-04-13 19:39:56,641 - INFO - Loading destination workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx
+2024-04-13 19:39:56,642 - INFO - Created new sheet 'Indexed Pages' and added headers.
+2024-04-13 19:39:56,642 - INFO - Copied 0 rows from 'Indexed Data' to 'Indexed Pages'.
+2024-04-13 19:39:56,644 - INFO - Data successfully saved to 'Indexed Pages' in 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 19:39:56,644 - INFO - Navigating to https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC to retrieve 404 URLs...
+2024-04-13 19:39:57,313 - INFO - EXPORT button clicked.
+2024-04-13 19:39:57,875 - INFO - Download Excel button clicked.
+2024-04-13 19:39:57,875 - INFO - Waiting for download to start for files starting with turnkeyofficespace.com-Coverage-Drilldown...
+2024-04-13 19:40:07,881 - INFO - Download complete for file: turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 19:40:07,898 - INFO - Extracted 404 URLs from the downloaded file: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 19:40:07,898 - INFO - Removed downloaded file: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 19:40:07,899 - INFO - Valid 404 URLs parsed: 65
+2024-04-13 19:40:07,904 - INFO - Workbook loaded for 404 URLs at '/Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx'.
+2024-04-13 19:40:07,904 - INFO - Created new '404s' sheet and added headers.
+2024-04-13 19:40:07,912 - INFO - 404 URLs successfully written to the workbook.
+2024-04-13 19:40:09,399 - INFO - Navigating to the performance page...
+2024-04-13 19:40:09,403 - INFO - Attempting to find and click the EXPORT button...
+2024-04-13 19:40:09,438 - INFO - EXPORT button clicked.
+2024-04-13 19:40:09,438 - INFO - Attempting to find and click 'Download Excel'...
+2024-04-13 19:40:09,993 - INFO - Download Excel clicked.
+2024-04-13 19:40:09,993 - INFO - Waiting for download to start for files starting with turnkeyofficespace.com-Performance-on-Search...
+2024-04-13 19:40:19,999 - INFO - Download complete for file: turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx
+2024-04-13 19:40:19,999 - INFO - File downloaded: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx
+2024-04-13 19:40:19,999 - INFO - Attempting to load workbook from /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx.
+2024-04-13 19:40:20,097 - INFO - Writing data to 'Queries Last 3 Months' sheet.
+2024-04-13 19:40:20,097 - INFO - Loading or creating workbook 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 19:40:20,100 - INFO - Created new sheet 'Queries Last 3 Months' and set headers.
+2024-04-13 19:40:20,106 - INFO - Appended 1000 rows to 'Queries Last 3 Months'.
+2024-04-13 19:40:20,124 - INFO - Data written to sheet Queries Last 3 Months in Monthly_SEO_Metrics.xlsx
+2024-04-13 19:40:20,124 - INFO - Writing data to 'Top Pages Last 3 Months' sheet.
+2024-04-13 19:40:20,124 - INFO - Loading or creating workbook 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 19:40:20,148 - INFO - Created new sheet 'Top Pages Last 3 Months' and set headers.
+2024-04-13 19:40:20,154 - INFO - Appended 1000 rows to 'Top Pages Last 3 Months'.
+2024-04-13 19:40:20,194 - INFO - Data written to sheet Top Pages Last 3 Months in Monthly_SEO_Metrics.xlsx
+2024-04-13 19:40:20,194 - INFO - Downloaded file removed and performance data successfully written.
+2024-04-13 19:40:21,858 - INFO - Navigating to performance analytics page.
+2024-04-13 19:40:21,862 - INFO - Page loaded successfully.
+2024-04-13 19:40:21,869 - INFO - Total clicks as of 04/13/24: 1492
+2024-04-13 19:40:21,869 - INFO - Parsed Total Clicks Data: {'Last Updated': '04/13/24', 'Total Clicks': 1492}
+2024-04-13 19:40:21,873 - INFO - Total clicks data updated successfully.
+2024-04-13 19:40:21,873 - INFO - Loading source workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Total_Clicks.xlsx
+2024-04-13 19:40:21,875 - INFO - Loading destination workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx
+2024-04-13 19:40:21,937 - INFO - Created new sheet 'Total Clicks Last 3 Months' and added headers.
+2024-04-13 19:40:21,937 - INFO - Copied 0 rows from 'Total Clicks' to 'Total Clicks Last 3 Months'.
+2024-04-13 19:40:21,979 - INFO - Data successfully saved to 'Total Clicks Last 3 Months' in 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 20:55:49,632 - INFO - Navigating to the login page...
+2024-04-13 20:55:50,768 - INFO - Page loaded, attempting to fill username...
+2024-04-13 20:55:50,978 - INFO - Username entered, waiting for password filed...
+2024-04-13 20:56:08,002 - INFO - Password field available, entering password...
+2024-04-13 20:56:08,084 - INFO - Password submitted, waiting for 2FA prompt...
+2024-04-13 20:56:38,592 - ERROR - 2FA input field not found or Next button not clickable.
+2024-04-13 20:56:41,316 - INFO - Navigated to https://search.google.com/u/2/search-console/index?resource_id=sc-domain:turnkeyofficespace.com
+2024-04-13 20:56:41,653 - INFO - Navigatied to console and page in loaded.
+2024-04-13 20:56:42,400 - INFO - Navigated to https://search.google.com/u/2/search-console/index?resource_id=sc-domain:turnkeyofficespace.com
+2024-04-13 20:56:42,407 - INFO - Navigatied to console and page in loaded.
+2024-04-13 20:56:42,435 - INFO - Indexed data found: {'Last Updated': '4/8/24', 'Indexed Count': '1,837'}
+2024-04-13 20:56:42,436 - INFO - Found data: {'Last Updated': '4/8/24', 'Indexed Count': '1,837'}
+2024-04-13 20:56:42,436 - INFO - Indexed Pages Data parsed: {'Last Updated': '4/8/24', 'Indexed Count': 1837}
+2024-04-13 20:56:42,440 - INFO - Found existing 'Indexed Data' sheet.
+2024-04-13 20:56:42,443 - INFO - Indexed data updated successfully in '/Users/jonathanbachrach/Projects/SEOReportGenerator/Indexed_Pages.xlsx'.
+2024-04-13 20:56:42,443 - INFO - Loading source workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Indexed_Pages.xlsx
+2024-04-13 20:56:42,444 - INFO - Loading destination workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx
+2024-04-13 20:56:42,446 - INFO - Created new sheet 'Indexed Pages' and added headers.
+2024-04-13 20:56:42,446 - INFO - Copied 0 rows from 'Indexed Data' to 'Indexed Pages'.
+2024-04-13 20:56:42,448 - INFO - Data successfully saved to 'Indexed Pages' in 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 20:56:42,448 - INFO - Navigating to https://search.google.com/u/2/search-console/index/drilldown?resource_id=sc-domain%3Aturnkeyofficespace.com&item_key=CAMYDSAC to retrieve 404 URLs...
+2024-04-13 20:56:43,399 - INFO - EXPORT button clicked.
+2024-04-13 20:56:43,956 - INFO - Download Excel button clicked.
+2024-04-13 20:56:43,956 - INFO - Waiting for download to start for files starting with turnkeyofficespace.com-Coverage-Drilldown...
+2024-04-13 20:56:53,962 - INFO - Download complete for file: turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 20:56:53,977 - INFO - Extracted 404 URLs from the downloaded file: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 20:56:53,977 - INFO - Removed downloaded file: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Coverage-Drilldown-2024-04-13 (9).xlsx
+2024-04-13 20:56:53,978 - INFO - Valid 404 URLs parsed: 65
+2024-04-13 20:56:53,980 - INFO - Workbook loaded for 404 URLs at '/Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx'.
+2024-04-13 20:56:53,980 - INFO - Created new '404s' sheet and added headers.
+2024-04-13 20:56:53,985 - INFO - 404 URLs successfully written to the workbook.
+2024-04-13 20:56:55,040 - INFO - Navigating to the performance page...
+2024-04-13 20:56:55,559 - INFO - Attempting to find and click the EXPORT button...
+2024-04-13 20:56:55,592 - INFO - EXPORT button clicked.
+2024-04-13 20:56:55,592 - INFO - Attempting to find and click 'Download Excel'...
+2024-04-13 20:56:56,153 - INFO - Download Excel clicked.
+2024-04-13 20:56:56,153 - INFO - Waiting for download to start for files starting with turnkeyofficespace.com-Performance-on-Search...
+2024-04-13 20:57:06,159 - INFO - Download complete for file: turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx
+2024-04-13 20:57:06,160 - INFO - File downloaded: /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx
+2024-04-13 20:57:06,160 - INFO - Attempting to load workbook from /Users/jonathanbachrach/Downloads/turnkeyofficespace.com-Performance-on-Search-2024-04-13.xlsx.
+2024-04-13 20:57:06,255 - INFO - Writing data to 'Queries Last 3 Months' sheet.
+2024-04-13 20:57:06,255 - INFO - Loading or creating workbook 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 20:57:06,258 - INFO - Created new sheet 'Queries Last 3 Months' and set headers.
+2024-04-13 20:57:06,263 - INFO - Appended 1000 rows to 'Queries Last 3 Months'.
+2024-04-13 20:57:06,282 - INFO - Data written to sheet Queries Last 3 Months in Monthly_SEO_Metrics.xlsx
+2024-04-13 20:57:06,282 - INFO - Writing data to 'Top Pages Last 3 Months' sheet.
+2024-04-13 20:57:06,282 - INFO - Loading or creating workbook 'Monthly_SEO_Metrics.xlsx'.
+2024-04-13 20:57:06,306 - INFO - Created new sheet 'Top Pages Last 3 Months' and set headers.
+2024-04-13 20:57:06,312 - INFO - Appended 1000 rows to 'Top Pages Last 3 Months'.
+2024-04-13 20:57:06,352 - INFO - Data written to sheet Top Pages Last 3 Months in Monthly_SEO_Metrics.xlsx
+2024-04-13 20:57:06,352 - INFO - Downloaded file removed and performance data successfully written.
+2024-04-13 20:57:07,897 - INFO - Navigating to performance analytics page.
+2024-04-13 20:57:07,902 - INFO - Page loaded successfully.
+2024-04-13 20:57:07,909 - INFO - Total clicks as of 04/13/24: 1492
+2024-04-13 20:57:07,909 - INFO - Parsed Total Clicks Data: {'Last Updated': '04/13/24', 'Total Clicks': 1492}
+2024-04-13 20:57:07,913 - INFO - Total clicks data updated successfully.
+2024-04-13 20:57:07,913 - INFO - Loading source workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Total_Clicks.xlsx
+2024-04-13 20:57:07,914 - INFO - Loading destination workbook from /Users/jonathanbachrach/Projects/SEOReportGenerator/Monthly_SEO_Metrics.xlsx
+2024-04-13 20:57:07,968 - INFO - Created new sheet 'Total Clicks Last 3 Months' and added headers.
+2024-04-13 20:57:07,968 - INFO - Copied 0 rows from 'Total Clicks' to 'Total Clicks Last 3 Months'.
+2024-04-13 20:57:08,005 - INFO - Data successfully saved to 'Total Clicks Last 3 Months' in 'Monthly_SEO_Metrics.xlsx'.
