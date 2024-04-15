@@ -1,4 +1,4 @@
-# Given our entire program (below), what should go into requirements.txt?
+# Please help me create a README.md for my SEO Report Generation program below
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -26,7 +26,7 @@ class SEOReportGenerator:
 
 	def __init__(self):
 		# Define the base path where Excel files will be saved
-		self.base_path = "/Users/jonathanbachrach/Projects/SEOReportGenerator"
+		self.base_path = "/Users/jonathanbachrach/Projects/SEOReportGenerator/reportGenerator"
 
 		# Initialize the WebDriver using WebDriverUtility
 		self.driver = WebDriverUtility.setup_driver()
