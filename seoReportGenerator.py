@@ -55,7 +55,7 @@ class SEOReportGenerator:
 				EC.presence_of_element_located((By.ID, "identifierId"))
 			)
 
-			user_elem.send_keys('jon@turnkeyofficespace.com')
+			user_elem.send_keys('USERNAME')
 		
 			# Click the 'Next" button after entering the username
 			next_button = WebDriverWait(self.driver, 10).until(
@@ -72,7 +72,7 @@ class SEOReportGenerator:
 			time.sleep(2)
 			logger.info("Password field available, entering password...")
 
-			password_elem.send_keys('Kjwmx6Koaet2jx')
+			password_elem.send_keys('PASSWORD')
 
 			# Click the 'Next" button after entering the password
 			next_button_password = WebDriverWait(self.driver, 10).until(
