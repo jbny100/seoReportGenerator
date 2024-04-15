@@ -79,7 +79,11 @@ INFO:root:Successfully logged in with username: your_username
 
 - Centralized Saving and Cleanup
 
-	Use of a centralized save method (in run()) that not only saves the workbook but also cleans it up (removes unwanted sheets) just before finalizing. This avoids having to save Monthly_SEO_Metrics.xlsx at the end of individual methods. 
+	Use of a centralized save method (in run()) that not only saves the workbook but also cleans it up (removes unwanted sheets) just before finalizing. This avoids having to save 		Monthly_SEO_Metrics.xlsx at the end of individual methods.
+
+- Further modularization
+
+  	Place the BrowserNavigator, DataParser and ExcelManager classes into different files in the directory in order to make the program easier to read and maintain. 
 
 ## Contributing
 
