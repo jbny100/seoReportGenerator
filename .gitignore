@@ -2,4 +2,6 @@
 *.log
 *.png
 
+venv/
+
 Old Reports/

@@ -1,6 +1,7 @@
 # The following is my full webdriver utility class
 
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 
@@ -12,7 +13,8 @@ class WebDriverUtility:
 		Sets up the Chrome WebDriver.
 		return: A configured WebDriver instance.
 		"""
-		chrome_options = Options()
+		# chrome_options = Options()
+		chrome_options = webdriver.ChromeOptions()
 		chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
 		chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
 		chrome_options.add_experimental_option('prefs', {
@@ -24,7 +26,10 @@ class WebDriverUtility:
 		chrome_options.binary_location = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 		# Specify path to ChromeDriver explicitly instead of using webdriver-manager
-		service = Service(executable_path="/usr/local/bin/chromedriver")
+		# service = Service(executable_path="/usr/local/bin/chromedriver")
+
+		# Use ChromeDriverManager to automatically manage driver versions
+		service = Service(executable_path=ChromeDriverManager().install())
 
 		try: 
 			driver = webdriver.Chrome(service=service, options=chrome_options)

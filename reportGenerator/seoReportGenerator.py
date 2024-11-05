@@ -1,4 +1,3 @@
-# Please help me create a README.md for my SEO Report Generation program below
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
